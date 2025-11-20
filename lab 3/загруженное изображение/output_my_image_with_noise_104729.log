@@ -1,0 +1,105 @@
+=== My Image Test with Noise Program ===
+=== Running the noise version with my image ===
+=== FINAL TECHNICAL ANALYSIS WITH NOISE ===
+
+=== GPU TECHNICAL SPECIFICATIONS ===
+--- GPU 0 ---
+Name: Tesla V100-PCIE-16GB
+Compute Capability: 7.0
+Clock Rate: 1380 MHz
+Memory: 16144 MB
+Memory Clock: 877 MHz
+Memory Bus Width: 4096 bits
+Memory Bandwidth: 898.048 GB/s
+L2 Cache: 6144 KB
+Multiprocessors: 80
+Cores per SM: 64
+Total Cores: 5120
+Warp Size: 32
+Max Threads per Block: 1024
+Max Threads per MP: 2048
+Concurrent Kernels: 1
+PCI Bus ID: 97
+PCI Device ID: 0
+Memory Usage: 8451 MB / 16144 MB
+Memory Free: 47%
+ECC Enabled: Yes
+--- GPU 1 ---
+Name: Tesla V100-PCIE-16GB
+Compute Capability: 7.0
+Clock Rate: 1380 MHz
+Memory: 16144 MB
+Memory Clock: 877 MHz
+Memory Bus Width: 4096 bits
+Memory Bandwidth: 898.048 GB/s
+L2 Cache: 6144 KB
+Multiprocessors: 80
+Cores per SM: 64
+Total Cores: 5120
+Warp Size: 32
+Max Threads per Block: 1024
+Max Threads per MP: 2048
+Concurrent Kernels: 1
+PCI Bus ID: 219
+PCI Device ID: 0
+Memory Usage: 620 MB / 16144 MB
+Memory Free: 96%
+ECC Enabled: Yes
+=====================================
+
+Available GPUs: 2
+Using provided image: my_image.png
+Image loaded: 610x381 (3 channels)
+Total pixels: 232410
+Data size: 680 KB
+
+=== PARALLEL PROCESSING RESULTS ===
+
+--- blur FILTER ---
+Parallel execution: GPU0=190 rows (49%), GPU1=191 rows (50%)
+GPU 0 Time: 0.392 ms
+GPU 1 Time: 0.473 ms
+Performance Ratio (GPU0/GPU1): 0.828753x
+Total Parallel Time: 5.725 ms
+Theoretical Min Time: 0.473 ms
+Speedup: 0.0826201x
+Efficiency: 4.131%
+ANALYSIS: GPUs have similar performance
+Saved: technical_with_noise_blur.png
+
+--- edge FILTER ---
+Parallel execution: GPU0=190 rows (49%), GPU1=191 rows (50%)
+GPU 0 Time: 0.335 ms
+GPU 1 Time: 0.294 ms
+Performance Ratio (GPU0/GPU1): 1.13946x
+Total Parallel Time: 6.599 ms
+Theoretical Min Time: 0.335 ms
+Speedup: 0.0507653x
+Efficiency: 2.53826%
+ANALYSIS: GPUs have similar performance
+Saved: technical_with_noise_edge.png
+
+--- denoise FILTER ---
+Parallel execution: GPU0=190 rows (49%), GPU1=191 rows (50%)
+GPU 0 Time: 0.377 ms
+GPU 1 Time: 0.503 ms
+Performance Ratio (GPU0/GPU1): 0.749503x
+Total Parallel Time: 5.439 ms
+Theoretical Min Time: 0.503 ms
+Speedup: 0.0924802x
+Efficiency: 4.62401%
+ANALYSIS: GPUs have similar performance
+Saved: technical_with_noise_denoise.png
+
+=== TECHNICAL ANALYSIS WITH NOISE COMPLETE ===
+=== Checking results ===
+-rw-rw-r-- 1 mag mag 253950 Nov 20 20:47 technical_with_noise_blur.png
+-rw-rw-r-- 1 mag mag 257747 Nov 20 20:47 technical_with_noise_denoise.png
+-rw-rw-r-- 1 mag mag 451092 Nov 20 20:47 technical_with_noise_edge.png
+technical_with_noise_blur.png:    PNG image data, 610 x 381, 8-bit/color RGB, non-interlaced
+technical_with_noise_denoise.png: PNG image data, 610 x 381, 8-bit/color RGB, non-interlaced
+technical_with_noise_edge.png:    PNG image data, 610 x 381, 8-bit/color RGB, non-interlaced
+-rw-rw-r-- 1 mag mag 248K Nov 20 20:47 technical_with_noise_blur.png
+-rw-rw-r-- 1 mag mag 252K Nov 20 20:47 technical_with_noise_denoise.png
+-rw-rw-r-- 1 mag mag 441K Nov 20 20:47 technical_with_noise_edge.png
+=== Job completed ===
