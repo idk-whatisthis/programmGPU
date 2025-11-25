@@ -281,60 +281,60 @@ float process_part_parallel(const Image& input, Image& output, const std::string
 }
 
 // Функция-обертка для запуска в отдельном потоке
-std::pair<float, bool> process_gpu_wrapper(const Image& input, Image& output, const std::string& filter_type, 
+std::pair<float, bool> process_gpu_wrapper(const Image& input, Image& output, const std::string& filter_type, // возвращает std::pair<float, bool> , float - время выполнения в миллисекундах, bool - флаг успешности 
                                           int gpu_id, int start_row, int end_row) {
     try {
         float time = process_part_parallel(input, output, filter_type, gpu_id, start_row, end_row);
         return std::make_pair(time, true);
-    } catch (const std::exception& e) {
+    } catch (const std::exception& e) { // ловит любые исключения типа std::exception
         std::cerr << "GPU " << gpu_id << " error: " << e.what() << std::endl;
         return std::make_pair(0.0f, false);
     }
 }
 
-// Основная функция с ПАРАЛЛЕЛЬНЫМ выполнением
+// Основная функция с ПАРАЛЛЕЛЬНЫМ выполнением ( координация параллельного выполнения на двух ГПУ
 void apply_filter_parallel_gpu(const Image& input, Image& output, const std::string& filter_type, 
                               float& total_time, float& time_gpu0, float& time_gpu1) {
     output.width = input.width;
     output.height = input.height;
     output.channels = input.channels;
-    output.data.resize(input.width * input.height * input.channels);
-    
+    output.data.resize(input.width * input.height * input.channels); // resize() . Метод класса std::vector который изменяет размер вектора
+ // проверка доступности гпу   
     int num_gpus;
-    cudaGetDeviceCount(&num_gpus);
+    cudaGetDeviceCount(&num_gpus); // получаем количество доступных гпу
     
-    if (num_gpus < 2) {
+    if (num_gpus < 2) { // выводит ошибку
         std::cerr << "ERROR: Need at least 2 GPUs for multi-GPU processing!" << std::endl;
         return;
     }
     
     // БАЛАНСИРОВКА НАГРУЗКИ 50%/50% для параллельного выполнения
-    int mid_row = input.height / 2;
+    int mid_row = input.height / 2; // целочисленное деление
     
     // GPU 0: верхняя половина
     int start1 = 0;
     int end1 = mid_row;
     
     // GPU 1: нижняя половина
-    int start2 = mid_row;
+    int start2 = mid_row; 
     int end2 = input.height;
-    
+    // показывает распределение работы между гпу
     std::cout << "Parallel execution: GPU0=" << (end1-start1) << " rows (" 
               << (end1-start1)*100/input.height << "%), "
               << "GPU1=" << (end2-start2) << " rows (" 
               << (end2-start2)*100/input.height << "%)" << std::endl;
     
     // ЗАПУСК В ОТДЕЛЬНЫХ ПОТОКАХ - ПАРАЛЛЕЛЬНО!
-    auto total_start = std::chrono::high_resolution_clock::now();
+    auto total_start = std::chrono::high_resolution_clock::now(); 
     
-    std::future<std::pair<float, bool>> future0 = std::async(std::launch::async, 
-        process_gpu_wrapper, std::ref(input), std::ref(output), filter_type, 0, start1, end1);
+    std::future<std::pair<float, bool>> future0 = std::async(std::launch::async,  // запускает функциб асинхронно ( в отдельном потоке) ; std::ref(input) - передача параметров
+        process_gpu_wrapper, std::ref(input), std::ref(output), filter_type, 0, start1, end1); // вывод - std::future<std::pair<float, bool>> будет содержать время и статус
     
     std::future<std::pair<float, bool>> future1 = std::async(std::launch::async, 
         process_gpu_wrapper, std::ref(input), std::ref(output), filter_type, 1, start2, end2);
     
     // Ждем завершения обоих потоков
-    auto result0 = future0.get();
+    auto result0 = future0.get(); // future0.get - блокирует текущий поток до завершения гпу 0
     auto result1 = future1.get();
     
     auto total_end = std::chrono::high_resolution_clock::now();
@@ -347,7 +347,8 @@ void apply_filter_parallel_gpu(const Image& input, Image& output, const std::str
     if (result1.second) time_gpu1 = result1.first;
     else time_gpu1 = 0;
 }
-
+// функции работы с png (без изменений)
+// сохранение 
 bool write_png(const std::string& filename, const Image& image) {
     FILE *fp = fopen(filename.c_str(), "wb");
     if (!fp) return false;
@@ -428,7 +429,7 @@ int main(int argc, char** argv) {
     print_gpu_specs();
     
     int num_gpus;
-    cudaGetDeviceCount(&num_gpus);
+    cudaGetDeviceCount(&num_gpus); // проверяет количество доступных гпу
     std::cout << "\nAvailable GPUs: " << num_gpus << std::endl;
     
     std::string input_file;
