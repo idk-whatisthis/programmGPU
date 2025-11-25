@@ -446,10 +446,10 @@ int main(int argc, char** argv) {
         input_file = "technical_input_with_noise.png";
         std::cout << "No image provided, creating test image WITH NOISE" << std::endl;
         input_image = Image(610, 381, 3);
-        create_test_image_with_noise(input_image);
+        create_test_image_with_noise(input_image); // создаем изображение, если нет загруженного
         write_png(input_file, input_image);
     }
-    
+    // инфо о изображении
     std::cout << "Image loaded: " << input_image.width << "x" << input_image.height
               << " (" << input_image.channels << " channels)" << std::endl;
     std::cout << "Total pixels: " << input_image.width * input_image.height << std::endl;
@@ -461,7 +461,7 @@ int main(int argc, char** argv) {
     
     for (const auto& filter : filters) {
         std::cout << "\n--- " << filter << " FILTER ---" << std::endl;
-        
+    // создается выходное изображение    
         Image output;
         float total_time, time_gpu0, time_gpu1;
         
@@ -490,7 +490,7 @@ int main(int argc, char** argv) {
         } else {
             std::cout << "ANALYSIS: GPUs have similar performance" << std::endl;
         }
-        
+    // сохранение результатов    
         std::string output_file = "technical_with_noise_" + filter + ".png";
         if (write_png(output_file, output)) {
             std::cout << "Saved: " << output_file << std::endl;
