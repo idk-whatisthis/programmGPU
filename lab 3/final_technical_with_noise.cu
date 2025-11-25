@@ -479,7 +479,7 @@ int main(int argc, char** argv) {
         std::cout << "Total Parallel Time: " << total_time << " ms" << std::endl;
         std::cout << "Theoretical Min Time: " << max_gpu_time << " ms" << std::endl;
         std::cout << "Speedup: " << speedup << "x" << std::endl;
-        std::cout << "Efficiency: " << (speedup / 2.0 * 100.0) << "%" << std::endl;
+        std::cout << "Efficiency: " << (speedup / 2.0 * 100.0) << "%" << std::endl; //Формула эффективности: (фактическое ускорение / теоретическое ускорение) * 100%
         
         // АНАЛИЗ ПРОИЗВОДИТЕЛЬНОСТИ
         if (performance_ratio > 1.5) {
