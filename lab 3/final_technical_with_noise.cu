@@ -15,16 +15,17 @@ struct Image {
     std::vector<unsigned char> data;
     Image() : width(0), height(0), channels(0) {}
     Image(int w, int h, int c) : width(w), height(h), channels(c) {
-        data.resize(w * h * c);
+        data.resize(w * h * c); // выделяем память под все пиксели
     }
 };
 
 // Функция для расчета количества ядер на основе Compute Capability
-int get_cores_per_sm(int major, int minor) {
+int get_cores_per_sm(int major, int minor) {  // major- основная версия Compute Capability (например, 7), minor - минорная версия (например, 0)
     struct SMConfig {
         int major, minor, cores;
     };
-    
+
+// Каждая запись - это конкретная архитектура и количество ядер на SM
     SMConfig configs[] = {
         {3, 0, 192}, {3, 5, 192}, {3, 7, 192},
         {5, 0, 128}, {5, 2, 128}, {5, 3, 128},
@@ -33,13 +34,13 @@ int get_cores_per_sm(int major, int minor) {
         {8, 0, 64}, {8, 6, 128},
         {8, 9, 128}, {9, 0, 128}
     };
-    
-    for (const auto& config : configs) {
+  // Поиск в таблице  
+    for (const auto& config : configs) {  // перебирает все конфигурации, пока не найдет совпадения
         if (config.major == major && config.minor == minor) {
             return config.cores;
         }
     }
-    return 128;
+    return 128;  // если архитектура неизвестна, возвращает 128
 }
 
 // Функция для вывода технических характеристик GPU
@@ -47,14 +48,16 @@ void print_gpu_specs() {
     std::cout << "\n=== GPU TECHNICAL SPECIFICATIONS ===" << std::endl;
     
     int deviceCount;
-    cudaGetDeviceCount(&deviceCount);
-    
+    cudaGetDeviceCount(&deviceCount); // количество ГПУ
+
+ // перебор всех доступных ГПУ и заполнение структуры CUDA свойствами i-ого GPU  
     for (int i = 0; i < deviceCount; i++) {
         cudaDeviceProp prop;
         cudaGetDeviceProperties(&prop, i);
-        
+
+// вычисление количества ядер
         int cores_per_sm = get_cores_per_sm(prop.major, prop.minor);
-        int total_cores = prop.multiProcessorCount * cores_per_sm;
+        int total_cores = prop.multiProcessorCount * cores_per_sm; // количество SM* ядра на SM
         
         std::cout << "--- GPU " << i << " ---" << std::endl;
         std::cout << "Name: " << prop.name << std::endl;
@@ -79,13 +82,13 @@ void print_gpu_specs() {
         // Проверяем текущую загрузку
         size_t free, total;
         cudaSetDevice(i);
-        cudaMemGetInfo(&free, &total);
+        cudaMemGetInfo(&free, &total); // получаем свободную память и всю память
         std::cout << "Memory Usage: " << (total - free) / (1024*1024) << " MB / " 
                   << total / (1024*1024) << " MB" << std::endl;
         std::cout << "Memory Free: " << (free * 100) / total << "%" << std::endl;
         
         // Проверяем режим ECC
-        std::cout << "ECC Enabled: " << (prop.ECCEnabled ? "Yes" : "No") << std::endl;
+        std::cout << "ECC Enabled: " << (prop.ECCEnabled ? "Yes" : "No") << std::endl; // error correcting code ( коррекцияя ошибок)
     }
     std::cout << "=====================================" << std::endl;
 }
@@ -216,35 +219,36 @@ float process_part_parallel(const Image& input, Image& output, const std::string
     int channels = input.channels;
     
     // Создаем временный буфер для этой части с расширенными границами
-    int extended_height = height + 2;
-    std::vector<unsigned char> extended_input(width * extended_height * channels);
+    int extended_height = height + 2;  //фильтры 3×3 требуют соседей для каждого пикселя.Для обработки строки 190 нужны строки 189 и 191. Но эти строки могут находиться в другой части, обрабатываемой другим GPUРешение: Добавляем по одной строке сверху и снизу
+    std::vector<unsigned char> extended_input(width * extended_height * channels); //Размер буфера
     std::vector<unsigned char> extended_output(width * extended_height * channels);
     
     // Заполняем расширенный буфер
     for (int y = 0; y < extended_height; y++) {
         int src_y = start_row + y - 1;
-        if (src_y < 0) src_y = 0;
-        if (src_y >= input.height) src_y = input.height - 1;
-        
-        for (int x = 0; x < width; x++) {
-            for (int c = 0; c < channels; c++) {
-                int src_idx = (src_y * width + x) * channels + c;
+        if (src_y < 0) src_y = 0; // Верхняя граница
+        if (src_y >= input.height) src_y = input.height - 1;   // Нижняя границ
+      //Копирование данных пикселей  
+        for (int x = 0; x < width; x++) {  //Цикл по X
+            for (int c = 0; c < channels; c++) { //Цикл по каналам
+                int src_idx = (src_y * width + x) * channels + c; //src_y * width + x - линейный индекс пикселя в 2D изображении
                 int dst_idx = (y * width + x) * channels + c;
-                extended_input[dst_idx] = input.data[src_idx];
+                extended_input[dst_idx] = input.data[src_idx];  //Побайтовое копирование данных
             }
         }
     }
-    
+    // выделение памяти на ГПУ
     unsigned char *d_input, *d_output;
     int part_size = width * extended_height * channels;
     cudaMalloc(&d_input, part_size);
     cudaMalloc(&d_output, part_size);
     
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now(); //запоминаем время перед началом операции
     
-    cudaMemcpy(d_input, extended_input.data(), part_size, cudaMemcpyHostToDevice);
-    
-    dim3 blockSize(16, 16);
+    cudaMemcpy(d_input, extended_input.data(), part_size, cudaMemcpyHostToDevice); // направление копирования с ЦПУ на ГПУ
+
+// конфигурация запуска ядра
+    dim3 blockSize(16, 16); // 256 потоков в каждом блоке
     dim3 gridSize((width + blockSize.x - 1) / blockSize.x,
                   (extended_height + blockSize.y - 1) / blockSize.y);
     
@@ -256,21 +260,21 @@ float process_part_parallel(const Image& input, Image& output, const std::string
         median_filter_kernel<<<gridSize, blockSize>>>(d_input, d_output, width, extended_height, channels);
     }
     
-    cudaDeviceSynchronize();
-    cudaMemcpy(extended_output.data(), d_output, part_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize(); // блокирует выполнение ЦПУ до завершения всех операций на ГПУ
+    cudaMemcpy(extended_output.data(), d_output, part_size, cudaMemcpyDeviceToHost); // копируем обработанные данные с ГПУ на цпу
     
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     float time = duration.count() / 1000.0f;
     
     // Копируем только основную часть (без границ) в выходное изображение
-    for (int y = 1; y < extended_height - 1; y++) {
+    for (int y = 1; y < extended_height - 1; y++) { // удаление граничных пикселей
         int src_idx = (y * width) * channels;
         int dst_idx = ((start_row + y - 1) * width) * channels;
         memcpy(&output.data[dst_idx], &extended_output[src_idx], width * channels);
     }
     
-    cudaFree(d_input);
+    cudaFree(d_input); // освобождение памяти на ГПУ
     cudaFree(d_output);
     
     return time;
