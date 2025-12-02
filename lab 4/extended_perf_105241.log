@@ -1,0 +1,42 @@
+=== Extended Performance Comparison Test ===
+=== Compiling all programs ===
+=== Performance Results ===
+
+1. CREATE MATRIX OPERATION
+-------------------------
+Size 1024x1024:
+Create Matrix Time: 0.05 ms
+Matrix size: 1024x1024
+
+2. MATRIX TRANSPOSE OPERATION
+-------------------------
+Size 2048x2048:
+Matrix Transpose Time: 0.11 ms
+Matrix size: 2048x2048, Block size: 16x16
+
+3. MATRIX MULTIPLICATION OPERATION
+-------------------------
+Testing different sizes:
+Size 256x256:
+Matrix Multiplication Time: 0.06 ms
+A: 256x256, B: 256x512, C: 256x512
+Verification: CPU[10,10] = 60.237274, GPU[10,10] = 60.237278, Difference = 0.000004
+Size 512x512:
+Matrix Multiplication Time: 0.16 ms
+A: 512x512, B: 512x512, C: 512x512
+Verification: CPU[10,10] = 135.755936, GPU[10,10] = 135.755936, Difference = 0.000000
+Size 1024x1024:
+Matrix Multiplication Time: 0.61 ms
+A: 1024x1024, B: 1024x512, C: 1024x512
+Verification: CPU[10,10] = 264.665497, GPU[10,10] = 264.665497, Difference = 0.000000
+
+=== Performance Analysis ===
+Operations sorted by speed:
+1. Create Matrix (1024x1024): 0.05 ms - fastest
+2. Matrix Transpose (2048x2048): 0.11 ms
+3. Matrix Multiply (512x512): 0.16 ms - most computationally intensive
+
+Matrix multiplication is the most complex operation (O(n³))
+but still achieves excellent performance on GPU!
+
+=== Test Completed ===
