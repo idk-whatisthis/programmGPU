@@ -31,6 +31,7 @@ A[threadIdx.y * n + threadIdx.x] = 10 * threadIdx.y + threadIdx.x;
 **Matrix Multiply (с разделяемой памятью)**
 
 __shared__ BASE_TYPE As[BLOCK_SIZE][BLOCK_SIZE];
+
 __shared__ BASE_TYPE Bs[BLOCK_SIZE][BLOCK_SIZE];
 
 - **Оптимизация:** Тайлинг (tiling) данных
